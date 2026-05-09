@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows Security Alert</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .virus-window {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            background-color: #252526;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .virus-window.active {
+            display: flex;
+        }
+        
+        .window-header {
+            background-color: #3c3c3c;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .window-title {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        
+        .window-controls {
+            display: flex;
+        }
+        
+        .window-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 8px;
+            cursor: pointer;
+        }
+        
+        .close {
+            background-color: #e74c3c;
+        }
+        
+        .minimize {
+            background-color: #f39c12;
+        }
+        
+        .maximize {
+            background-color: #2ecc71;
+        }
+        
+        .window-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .alert-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .alert-icon {
+            font-size: 24px;
+            color: #e74c3c;
+            margin-right: 15px;
+        }
+        
+        .alert-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .alert-message {
+            margin-bottom: 20px;
+        }
+        
+        .threat-list {
+            background-color: #1e1e1e;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .threat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .threat-item:last-child {
+            border-bottom: none;
+        }
+        
+        .threat-name {
+            display: flex;
+            align-items: center;
+        }
+        
+        .threat-icon {
+            color: #e74c3c;
+            margin-right: 10px;
+        }
+        
+        .threat-level {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: auto;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background-color: #0078d4;
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #3c3c3c;
+            color: white;
+        }
+        
+        .console-window {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 500px;
+            background-color: #000;
+            border-radius: 5px 5px 0 0;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .console-header {
+            background-color: #3c3c3c;
+            padding: 5px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .console-title {
+            font-size: 12px;
+            color: #fff;
+        }
+        
+        .console-close {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .console-content {
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #0f0;
+            height: 200px;
+            overflow-y: auto;
+        }
+        
+        .console-line {
+            margin-bottom: 5px;
+        }
+        
+        .console-input {
+            display: flex;
+            align-items: center;
+        }
+        
+        .console-prompt {
+            margin-right: 5px;
+        }
+        
+        .console-cursor {
+            width: 8px;
+            height: 14px;
+            background-color: #0f0;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .notification {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            background-color: #252526;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 80;
+            display: none;
+            flex-direction: column;
+            transform: translateX(350px);
+            transition: transform 0.3s ease-out;
+        }
+        
+        .notification.active {
+            display: flex;
+            transform: translateX(0);
+        }
+        
+        .notification-header {
+            background-color: #3c3c3c;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .notification-title {
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        
+        .notification-icon {
+            color: #e74c3c;
+            margin-right: 8px;
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .notification-content {
+            padding: 10px 12px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Windows Defender Virus Alert -->
+    <div id="virusWindow" class="virus-window active">
+        <div class="window-header">
+            <div class="window-title">
+                <i class="fas fa-shield-alt" style="margin-right: 8px; color: #0078d4;"></i>
+                Windows Security
+            </div>
+            <div class="window-controls">
+                <div class="window-control minimize"></div>
+                <div class="window-control maximize"></div>
+                <div class="window-control close" id="virusWindowClose"></div>
+            </div>
+        </div>
+        <div class="window-content">
+            <div class="alert-header">
+                <div class="alert-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="alert-title">Threats Detected</div>
+            </div>
+            <div class="alert-message">
+                Windows Defender has found multiple threats on your computer. Immediate action is required to prevent damage to your system and data.
+            </div>
+            <div class="threat-list">
+                <div class="threat-item">
+                    <div class="threat-name">
+                        <div class="threat-icon">
+                            <i class="fas fa-virus"></i>
+                        </div>
+                        <div>Trojan:Win32/Ransomware.HH</div>
+                    </div>
+                    <div class="threat-level">Severe</div>
+                </div>
+                <div class="<div class="threat-item">
+                    <div class="threat-name">
+                        <div class="threat-icon">
+                            <i class="fas fa-virus"></i>
+                        </div>
+                        <div>Backdoor:Win32/Androm.HA</div>
+                    </div>
+                    <div class="threat-level">Severe</div>
+                </div>
+                <div class="threat-item">
+                    <div class="threat-name">
+                        <div class="threat-icon">
+                            <i class="fas fa-virus"></i>
+                        </div>
+                        <div>Worm:Win32/Conficker.X</div>
+                    </div>
+                    <div class="threat-level">High</div>
+                </div>
+                <div class="threat-item">
+                    <div class="threat-name">
+                        <div class="threat-icon">
+                            <i class="fas fa-virus"></i>
+                        </div>
+                        <div>PUP:Win32/Keylogger.FG</div>
+                    </div>
+                    <div class="threat-level">High</div>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" id="ignoreBtn">Ignore</button>
+                <button class="btn btn-primary" id="quarantineBtn">Quarantine</button>
+                <button class="btn btn-danger" id="removeBtn">Remove All</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Console Window -->
+    <div id="consoleWindow" class="console-window">
+        <div class="console-header">
+            <div class="console-title">Command Prompt</div>
+            <button class="console-close" id="consoleClose">X</button>
+        </div>
+        <div class="console-content" id="consoleContent">
+            <div class="console-line">Microsoft Windows [Version 10.0.19041.264]</div>
+            <div class="console-line">(c) 2020 Microsoft Corporation. All rights reserved.</div>
+            <div class="console-line"></div>
+            <div class="console-input">
+                <div class="console-prompt">C:\Users\Administrator&gt;</div>
+                <div class="console-cursor"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <div class="notification-header">
+            <div class="notification-title">
+                <div class="notification-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                Security Alert
+            </div>
+            <button class="notification-close" id="notificationClose">X</button>
+        </div>
+        <div class="notification-content" id="notificationContent">
+            Suspicious activity detected on your network.
+        </div>
+    </div>
+
+    <script>
+        // Virus window controls
+        document.getElementById('virusWindowClose').addEventListener('click', function() {
+            document.getElementById('virusWindow').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('virusWindow').classList.add('active');
+            }, 2000);
+        });
+
+        // Ignore button
+        document.getElementById('ignoreBtn').addEventListener('click', function() {
+            const alertMessage = document.createElement('div');
+            alertMessage.style.position = 'absolute';
+            alertMessage.style.top = '50%';
+            alertMessage.style.left = '50%';
+            alertMessage.style.transform = 'translate(-50%, -50%)';
+            alertMessage.style.width = '400px';
+            alertMessage.style.backgroundColor = '#252526';
+            alertMessage.style.border = '1px solid #e74c3c';
+            alertMessage.style.borderRadius = '5px';
+            alertMessage.style.padding = '20px';
+            alertMessage.style.zIndex = '200';
+            alertMessage.style.textAlign = 'center';
+            
+            alertMessage.innerHTML = `
+                <div style="font-size: 24px; color: #e74c3c; margin-bottom: 15px;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">Cannot Ignore Threats</div>
+                <div style="margin-bottom: 15px;">These threats are severe and cannot be ignored. They must be removed immediately to prevent damage to your system.</div>
+                <button id="alertClose" style="padding: 8px 16px; background-color: #3c3c3c; border: none; border-radius: 4px; color: white; cursor: pointer;">OK</button>
+            `;
+            
+            document.body.appendChild(alertMessage);
+            
+            document.getElementById('alertClose').addEventListener('click', function() {
+                document.body.removeChild(alertMessage);
+            });
+        });
+
+        // Quarantine button
+        document.getElementById('quarantineBtn').addEventListener('click', function() {
+            // Show console window
+            document.getElementById('consoleWindow').style.display = 'flex';
+            
+            // Simulate quarantine process
+            const consoleContent = document.getElementById('consoleContent');
+            const commands = [
+                'C:\\Users\\Administrator&gt;scanning system for threats...',
+                'Initializing quarantine protocol...',
+                'Scanning: C:\\Windows\\System32\\drivers\\etc\\hosts...',
+                'Threat detected: Trojan:Win32/Ransomware.HH',
+                'Attempting to quarantine...',
+                'ERROR: Cannot quarantine file. File is in use by system process.',
+                'Scanning: C:\\Users\\Administrator\\Documents\\...',
+                'Threat detected: Backdoor:Win32/Androm.HA',
+                'Attempting to quarantine...',
+                'ERROR: Access denied. File is protected by malware.',
+                'Scanning: C:\\Program Files\\...',
+                'Threat detected: Worm:Win32/Conficker.X',
+                'Attempting to quarantine...',
+                'ERROR: Cannot quarantine. Malware has modified system permissions.',
+                'QUARANTINE FAILED: All threats are active and cannot be contained.',
+                'C:\\Users\\Administrator&gt;'
+            ];
+            
+            let commandIndex = 0;
+            const commandInterval = setInterval(() => {
+                if (commandIndex < commands.length) {
+                    const newLine = document.createElement('div');
+                    newLine.className = 'console-line';
+                    newLine.textContent = commands[commandIndex];
+                    consoleContent.insertBefore(newLine, consoleContent.lastElementChild);
+                    
+                    // Scroll to bottom
+                    consoleContent.scrollTop = consoleContent.scrollHeight;
+                    
+                    commandIndex++;
+                } else {
+                    clearInterval(commandInterval);
+                    
+                    // Show quarantine failed message
+                    setTimeout(() => {
+                        const quarantineFailed = document.createElement('div');
+                        quarantineFailed.style.position = 'absolute';
+                        quarantineFailed.style.top = '50%';
+                        quarantineFailed.style.left = '50%';
+                        quarantineFailed.style.transform = 'translate(-50%, -50%)';
+                        quarantineFailed.style.width = '400px';
+                        quarantineFailed.style.backgroundColor = '#252526';
+                        quarantineFailed.style.border = '1px solid #e74c3c';
+                        quarantineFailed.style.borderRadius = '5px';
+                        quarantineFailed.style.padding = '20px';
+                        quarantineFailed.style.zIndex = '200';
+                        quarantineFailed.style.textAlign = 'center';
+                        
+                        quarantineFailed.innerHTML = `
+                            <div style="font-size: 24px; color: #e74c3c; margin-bottom: 15px;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">Quarantine Failed</div>
+                            <div style="margin-bottom: 15px;">The malware has infected critical system files and cannot be quarantined. Your system is at high risk.</div>
+                            <button id="quarantineFailedClose" style="padding: 8px 16px; background-color: #e74c3c; border: none; border-radius: 4px; color: white; cursor: pointer;">Remove All</button>
+                        `;
+                        
+                        document.body.appendChild(quarantineFailed);
+                        
+                        document.getElementById('quarantineFailedClose').addEventListener('click', function() {
+                            document.body.removeChild(quarantineFailed);
+                            document.getElementById('removeBtn').click();
+                        });
+                    }, 1000);
+                }
+            }, 500);
+        });
+
+        // Console close
+        document.getElementById('consoleClose').addEventListener('click', function() {
+            document.getElementById('consoleWindow').style.display = 'none';
+        });
+
+        // Remove All button
+        document.getElementById('removeBtn').addEventListener('click', function() {
+            // Show removal progress
+            const removalProgress = document.createElement('div');
+            removalProgress.style.position = 'absolute';
+            removalProgress.style.top = '50%';
+            removalProgress.style.left = '50%';
+            removalProgress.style.transform = 'translate(-50%, -50%)';
+            removalProgress.style.width = '400px';
+            removalProgress.style.backgroundColor = '#252526';
+            removalProgress.style.borderRadius = '8px';
+            removalProgress.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.5)';
+            removalProgress.style.zIndex = '200';
+            removalProgress.style.display = 'flex';
+            removalProgress.style.flexDirection = 'column';
+            
+            removalProgress.innerHTML = `
+                <div style="background-color: #3c3c3c; padding: 10px 15px; display: flex;<div style="background-color: #3c3c3c; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-weight: 500;">Removing Threats</div>
+                </div>
+                <div style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column; align-items: center;">
+                    <div style="font-size: 24px; color: #e74c3c; margin-bottom: 15px;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                    <div style="margin-bottom: 15px; text-align: center;">
+                        Attempting to remove all detected threats...
+                    </div>
+                    <div style="width: 100%; height: 10px; background-color: #1e1e1e; border-radius: 5px; overflow: hidden; margin-bottom: 10px;">
+                        <div id="removalProgressBar" style="height: 100%; background-color: #e74c3c; width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                    <div id="removalProgressText" style="font-size: 12px; color: #aaa;">0%</div>
+                </div>
+            `;
+            
+            document.body.appendChild(removalProgress);
+            
+            // Animate removal progress
+            let removalProgress = 0;
+            const removalInterval = setInterval(() => {
+                removalProgress += Math.floor(Math.random() * 10) + 5;
+                if (removalProgress > 100) removalProgress = 100;
+                
+                document.getElementById('removalProgressBar').style.width = removalProgress + '%';
+                document.getElementById('removalProgressText').textContent = removalProgress + '%';
+                
+                if (removalProgress >= 100) {
+                    clearInterval(removalInterval);
+                    
+                    // Show removal failed message
+                    removalProgress.innerHTML = `
+                        <div style="background-color: #3c3c3c; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-weight: 500;">Removal Failed</div>
+                        </div>
+                        <div style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div style="font-size: 24px; color: #e74c3c; margin-bottom: 15px;">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <div style="margin-bottom: 15px; text-align: center;">
+                                Unable to remove threats. The malware has infected critical system files.
+                            </div>
+                            <div style="margin-bottom: 15px; text-align: center; color: #aaa;">
+                                Your personal files are being encrypted. Immediate action is required.
+                            </div>
+                            <button id="removalFailedClose" style="padding: 8px 16px; background-color: #e74c3c; border: none; border-radius: 4px; color: white; cursor: pointer;">View Details</button>
+                        </div>
+                    `;
+                    
+                    document.getElementById('removalFailedClose').addEventListener('click', function() {
+                        document.body.removeChild(removalProgress);
+                        
+                        // Show ransomware window
+                        const ransomWindow = document.createElement('div');
+                        ransomWindow.style.position = 'absolute';
+                        ransomWindow.style.top = '50%';
+                        ransomWindow.style.left = '50%';
+                        ransomWindow.style.transform = 'translate(-50%, -50%)';
+                        ransomWindow.style.width = '500px';
+                        ransomWindow.style.backgroundColor = '#252526';
+                        ransomWindow.style.borderRadius = '8px';
+                        ransomWindow.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.5)';
+                        ransomWindow.style.zIndex = '300';
+                        ransomWindow.style.display = 'flex';
+                        ransomWindow.style.flexDirection = 'column';
+                        
+                        ransomWindow.innerHTML = `
+                            <div style="background-color: #3c3c3c; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-weight: 500; display: flex; align-items: center;">
+                                    <i class="fas fa-lock" style="margin-right: 8px; color: #e74c3c;"></i>
+                                    Ransomware Alert
+                                </div>
+                                <button id="ransomClose" style="background: none; border: none; color: #fff; cursor: pointer;">X</button>
+                            </div>
+                            <div style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column;">
+                                <div style="font-size: 18px; font-weight: 600; margin-bottom: 15px; text-align: center; color: #e74c3c;">
+                                    Your files have been encrypted!
+                                </div>
+                                <div style="margin-bottom: 20px; text-align: center;">
+                                    All your personal files, photos, and documents have been locked with a military-grade encryption algorithm.
+                                </div>
+                                <div style="margin-bottom: 20px; text-align: center;">
+                                    To recover your files, you must pay <span style="color: #e74c3c; font-weight: 600;">0.5 Bitcoin</span> within <span id="countdown" style="color: #e74c3c; font-weight: 600;">24:00:00</span>
+                                </div>
+                                <div style="margin-bottom: 20px; text-align: center; font-family: 'Courier New', monospace; font-size: 14px;">
+                                    Bitcoin Address: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+                                </div>
+                                <div style="margin-bottom: 20px; text-align: center; font-size: 14px; color: #aaa;">
+                                    After the timer expires, the price will double, and your files may be permanently deleted.
+                                </div>
+                                <div style="display: flex; justify-content: center; gap: 10px; margin-top: auto;">
+                                    <button id="payNow" style="padding: 8px 16px; background-color: #e74c3c; border: none; border-radius: 4px; color: white; cursor: pointer;">Pay Now</button>
+                                    <button id="decryptOne" style="padding: 8px 16px; background-color: #3c3c3c; border: none; border-radius: 4px; color: white; cursor: pointer;">Decrypt One File for Free</button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        document.body.appendChild(ransomWindow);
+                        
+                        // Countdown timer
+                        let timeLeft = 24 * 60 * 60; // 24 hours in seconds
+                        const countdownElement = document.getElementById('countdown');
+                        
+                        const countdownInterval = setInterval(() => {
+                            timeLeft--;
+                            
+                            const hours = Math.floor(timeLeft / 3600);
+                            const minutes = Math.floor((timeLeft % 3600) / 60);
+                            const seconds = timeLeft % 60;
+                            
+                            countdownElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                            
+                            if (timeLeft <= 0) {
+                                clearInterval(countdownInterval);
+                                countdownElement.textContent = '00:00:00';
+                                countdownElement.style.color = '#ff0000';
+                                
+                                // Show expired message
+                                const expiredMessage = document.createElement('div');
+                                expiredMessage.style.position = 'absolute';
+                                expiredMessage.style.top = '50%';
+                                expiredMessage.style.left = '50%';
+                                expiredMessage.style.transform = 'translate(-50%, -50%)';
+                                expiredMessage.style.width = '400px';
+                                expiredMessage.style.backgroundColor = '#252526';
+                                expiredMessage.style.border = '1px solid #ff0000';
+                                expiredMessage.style.borderRadius = '5px';
+                                expiredMessage.style.padding = '20px';
+                                expiredMessage.style.zIndex = '400';
+                                expiredMessage.style.textAlign = 'center';
+                                
+                                expiredMessage.innerHTML = `
+                                    <div style="font-size: 24px; color: #ff0000; margin-bottom: 15px;">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">Time Expired</div>
+                                    <div style="margin-bottom: 15px;">The payment window has expired. Your files are now being permanently deleted.</div>
+                                    <div style="margin-bottom: 15px;">The ransom has now increased to 1.0 Bitcoin.</div>
+                                    <button id="expiredClose" style="padding: 8px 16px; background-color: #3c3c3c; border: none; border-radius: 4px; color: white; cursor: pointer;">OK</button>
+                                `;
+                                
+                                document.body.appendChild(expiredMessage);
+                                
+                                document.getElementById('expiredClose').addEventListener('click', function()document.getElementById('expiredClose').addEventListener('click', function() {
+                                    document.body.removeChild(expiredMessage);
+                                });
+                            }
+                        }, 1000);
+                        
+                        // Ransom window controls
+                        document.getElementById('ransomClose').addEventListener('click', function() {
+                            // Show cannot close message
+                            const cannotClose = document.createElement('div');
+                            cannotClose.style.position = 'absolute';
+                            cannotClose.style.top = '50%';
+                            cannotClose.style.left = '50%';
+                            cannotClose.style.transform = 'translate(-50%, -50%)';
+                            cannotClose.style.width = '400px';
+                            cannotClose.style.backgroundColor = '#252526';
+                            cannotClose.style.border = '1px solid #e74c3c';
+                            cannotClose.style.borderRadius = '5px';
+                            cannotClose.style.padding = '20px';
+                            cannotClose.style.zIndex = '400';
+                            cannotClose.style.textAlign = 'center';
+                            
+                            cannotClose.innerHTML = `
+                                <div style="font-size: 24px; color: #e74c3c; margin-bottom: 15px;">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                                <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">Cannot Close</div>
+                                <div style="margin-bottom: 15px;">This window cannot be closed until the ransom is paid. Your files will remain encrypted.</div>
+                                <button id="cannotCloseOK" style="padding: 8px 16px; background-color: #3c3c3c; border: none; border-radius: 4px; color: white; cursor: pointer;">OK</button>
+                            `;
+                            
+                            document.body.appendChild(cannotCloseClose);
+                            
+                            document.getElementById('cannotCloseOK').addEventListener('click', function() {
+                                document.body.removeChild(cannotCloseClose);
+                            });
+                        });
+                        
+                        // Pay Now button
+                        document.getElementById('payNow').addEventListener('click', function() {
+                            // Show payment window
+                            const paymentWindow = document.createElement('div');
+                            paymentWindow.style.position = 'absolute';
+                            paymentWindow.style.top = '50%';
+                            paymentWindow.style.left = '50%';
+                            paymentWindow.style.transform = 'translate(-50%, -50%)';
+                            paymentWindow.style.width = '450px';
+                            paymentWindow.style.backgroundColor = '#252526';
+                            paymentWindow.style.borderRadius = '8px';
+                            paymentWindow.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.5)';
+                            paymentWindow.style.zIndex = '400';
+                            paymentWindow.style.display = 'flex';
+                            paymentWindow.style.flexDirection = 'column';
+                            
+                            paymentWindow.innerHTML = `
+                                <div style="background-color: #3c3c3c; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="font-weight: 500; display: flex; align-items: center;">
+                                        <i class="fab fa-bitcoin" style="margin-right: 8px; color: #f7931a;"></i>
+                                        Bitcoin Payment
+                                    </div>
+                                    <button id="paymentClose" style="background: none; border: none; color: #fff; cursor: pointer;">X</button>
+                                </div>
+                                <div style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column;">
+                                    <div style="margin-bottom: 15px; text-align: center;">
+                                        Send <span style="color: #e74c3c; font-weight: 600;">0.5 Bitcoin</span> to the address below to decrypt your files.
+                                    </div>
+                                    <div style="margin-bottom: 15px; padding: 10px; background-color: #1e1e1e; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 14px; text-align: center;">
+                                        1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+                                    </div>
+                                    <div style="margin-bottom: 15px; text-align: center;">
+                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=bitcoin:1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa?amount=0.5" alt="Bitcoin QR Code" style="border: 1px solid #3c3c3c;">
+                                    </div>
+                                    <div style="margin-bottom: 15px; text-align: center; font-size: 14px; color: #aaa;">
+                                        After payment, your files will be automatically decrypted within 1 hour.
+                                    </div>
+                                    <div style="margin-bottom: 15px; text-align: center;">
+                                        <button id="checkPayment" style="padding: 8px 16px; background-color: #3c3c3c; border: none; border-radius: 4px; color: white; cursor: pointer;">Check Payment Status</button>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            document.body.appendChild(paymentWindow);
+                            
+                            // Payment window controls
+                            document.getElementById('paymentClose').addEventListener('click', function() {
+                                document.body.removeChild(paymentWindow);
+                            });
+                            
+                            // Check payment button
+                            document.getElementById('checkPayment').addEventListener('click', function() {
+                                // Show checking payment
+                                const checkingPayment = document.createElement('div');
+                                checkingPayment.style.position = 'absolute';
+                                checkingPayment.style.top = '50%';
+                                checkingPayment.style.left = '50%';
+                                checkingPayment.style.transform = 'translate(-50%, -50%)';
+                                checkingPayment.style.width = '300px';
+                                checkingPayment.style.backgroundColor = '#252526';
+                                checkingPayment.style.borderRadius = '5px';
+                                checkingPayment.style.padding = '20px';
+                                checkingPayment.style.zIndex = '500';
+                                checkingPayment.style.textAlign = 'center';
+                                
+                                checkingPayment.innerHTML = `
+                                    <div style="font-size: 24px; color: #f7931a; margin-bottom: 15px;">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                    </div>
+                                    <div style="margin-bottom: 15px;">Checking payment status...</div>
+                                    <div style="width: 100%; height: 10px; background-color: #1e1e1e; border-radius: 5px; overflow: hidden;">
+                                        <div style="height: 100%; background-color: #f7931a; width: 0%; animation: checkPayment 3s forwards;"></div>
+                                    </div>
+                                `;
+                                
+                                // Add animation
+                                const checkPaymentStyle = document.createElement('style');
+                                checkPaymentStyle.textContent = `
+                                    @keyframes checkPayment {
+                                        from { width: 0%; }
+                                        to { width: 100%; }
+                                    }
+                                `;
+                                document.head.appendChild(checkPaymentStyle);
+                                
+                                document.body.appendChild(checkingPayment);
+                                
+                                // After checking, show payment not received
+                                setTimeout(() => {
+                                    checkingPayment.innerHTML = `
+                                        <div style="font-size: 24px; color: #e74c3c; margin-bottom: 15px;">
+                                            <i class="fas fa-times-circle"></i>
+                                        </div>
+                                        <div style="margin-bottom: 15px;">Payment not received</div>
+                                        <div style="margin-bottom: 15px; font-size: 14px; color: #aaa;">
+                                            We haven't received your payment yet. Please make sure you sent the correct amount to the correct address.
+                                        </div>
+                                        <button id="paymentNotReceivedClose" style="padding: 8px 16px; background-color: #3c3c3c; border: none; border-radius: 4px; color: white; cursor: pointer;">OK</button>
+                                    `;
+                                    
+                                    document.getElementById('paymentNotReceivedClose').addEventListener('click', function() {
+                                        document.body.removeChild(checkingPayment);
+                                    });
+                                }, 3000);
+                            });
+                        });
+                        
+                        // Decrypt One File button
+                        document.getElementById('decryptOne').addEventListener('click', function() {
+                            // Show file selection
+                            const fileSelection = document.createElement('div');
+                            fileSelection.style.position = 'absolute';
+                            fileSelection.style.top = '50%';
+                            fileSelection.style.left = '50%';
+                            fileSelection.style.transform = 'translate(-50%, -50%)';
+                            fileSelection.style.width = '400px';
+                            fileSelection.style.backgroundColor = '#252526';
+                            fileSelection.style.borderRadius = '8px';
+                            fileSelection.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.5)';
+                            fileSelection.style.zIndex = '400';
+                            fileSelection.style.display = 'flex';
+                            fileSelection.style.flexDirection = 'column';
+                            
+                            fileSelection.innerHTML = `
+                                <div style="background-color: #3c3c3c; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="font-weight: 500;">Select File to Decrypt</div>
+                                    <button id="fileSelectionClose" style="background: none; border: none; color: #fff; cursor: pointer;">X</button>
+                                </div>
+                                <<div style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column;">
+                                    <div style="margin-bottom: 15px;">
+                                        Select one file to decrypt for free as proof that we can restore your files.
+                                    </div>
+                                    <div style="margin-bottom: 15px; background-color: #1e1e1e; border-radius: 4px; padding: 10px; max-height: 200px; overflow-y: auto;">
+                                        <div style="padding: 5px; cursor: pointer; border-bottom: 1px solid #333;">Document.docx.encrypted</div>
+                                        <div style="padding: 5px; cursor: pointer; border-bottom: 1px solid #333;">Photo.jpg.encrypted</div>
+                                        <div style="padding: 5px; cursor: pointer; border-bottom: 1px solid #333;">Video.mp4.encrypted</div>
+                                        <div style="padding: 5px; cursor: pointer; border-bottom: 1px solid #333;">Presentation.pptx.encrypted</div>
+                                        <div style="padding: 5px; cursor: pointer; border-bottom: 1px solid #333;">Spreadsheet.xlsx.encrypted</div>
+                                        <div style="padding: 5px; cursor: pointer;">Database.db.encrypted</div>
+                                    </div>
+                                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: auto;">
+                                        <button id="cancelDecrypt" style="padding: 8px 16px; background-color: #3c3c3c; border: none; border-radius: 4px; color: white; cursor: pointer;">Cancel</button>
+                                        <button id="decryptFile" style="padding: 8px 16px; background-color: #e74c3c; border: none; border-radius: 4px; color: white; cursor: pointer;">Decrypt</button>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            document.body.appendChild(fileSelection);
+                            
+                            // File selection controls
+                            document.getElementById('fileSelectionClose').addEventListener('click', function() {
+                                document.body.removeChild(fileSelection);
+                            });
+                            
+                            document.getElementById('cancelDecrypt').addEventListener('click', function() {
+                                document.body.removeChild(fileSelection);
+                            });
+                            
+                            document.getElementById('decryptFile').addEventListener('click', function() {
+                                document.body.removeChild(fileSelection);
+                                
+                                // Show decrypting file
+                                const decryptingFile = document.createElement('div');
+                                decryptingFile.style.position = 'absolute';
+                                decryptingFile.style.top = '50%';
+                                decryptingFile.style.left = '50%';
+                                decryptingFile.style.transform = 'translate(-50%, -50%)';
+                                decryptingFile.style.width = '300px';
+                                decryptingFile.style.backgroundColor = '#252526';
+                                decryptingFile.style.borderRadius = '5px';
+                                decryptingFile.style.padding = '20px';
+                                decryptingFile.style.zIndex = '500';
+                                decryptingFile.style.textAlign = 'center';
+                                
+                                decryptingFile.innerHTML = `
+                                    <div style="font-size: 24px; color: #4CAF50; margin-bottom: 15px;">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                    </div>
+                                    <div style="margin-bottom: 15px;">Decrypting file...</div>
+                                    <div style="width: 100%; height: 10px; background-color: #1e1e1e; border-radius: 5px; overflow: hidden;">
+                                        <div style="height: 100%; background-color: #4CAF50; width: 0%; animation: decryptFile 3s forwards;"></div>
+                                    </div>
+                                `;
+                                
+                                // Add animation
+                                const decryptFileStyle = document.createElement('style');
+                                decryptFileStyle.textContent = `
+                                    @keyframes decryptFile {
+                                        from { width: 0%; }
+                                        to { width: 100%; }
+                                    }
+                                `;
+                                document.head.appendChild(decryptFileStyle);
+                                
+                                document.body.appendChild(decryptingFile);
+                                
+                                // After decrypting, show success message
+                                setTimeout(() => {
+                                    decryptingFile.innerHTML = `
+                                        <div style="font-size: 24px; color: #4CAF50; margin-bottom: 15px;">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <div style="margin-bottom: 15px;">File successfully decrypted!</div>
+                                        <div style="margin-bottom: 15px; font-size: 14px; color: #aaa;">
+                                            As you can see, we can restore your files. Pay the ransom to decrypt all your files.
+                                        </div>
+                                        <button id="decryptSuccessClose" style="padding: 8px 16px; background-color: #3c3c3c; border: none; border-radius: 4px; color: white; cursor: pointer;">OK</button>
+                                    `;
+                                    
+                                    document.getElementById('decryptSuccessClose').addEventListener('click', function() {
+                                        document.body.removeChild(decryptingFile);
+                                    });
+                                }, 3000);
+                            });
+                        });
+                    });
+                }
+            }, 100);
+        });
+
+        // Show notification after 5 seconds
+        setTimeout(() => {
+            document.getElementById('notification').classList.add('active');
+            
+            // Rotate through different notification messages
+            const notifications = [
+                "Suspicious activity detected on your network.",
+                "Unauthorized access attempt blocked.",
+                "Malware detected in system files.",
+                "Firewall breach detected.",
+                "Data theft attempt prevented."
+            ];
+            
+            let notificationIndex = 0;
+            
+            document.getElementById('notificationClose').addEventListener('click', function() {
+                document.getElementById('notification').classList.remove('active');
+                
+                // Show a new notification after 3 seconds
+                setTimeout(() => {
+                    notificationIndex = (notificationIndex + 1) % notifications.length;
+                    document.getElementById('notificationContent').textContent = notifications[notificationIndex];
+                    document.getElementById('notification').classList.add('active');
+                }, 3000);
+            });
+        }, 5000);
+
+        // Show console window after 10 seconds
+        setTimeout(() => {
+            document.getElementById('consoleWindow').style.display = 'flex';
+            
+            // Simulate system scan
+            const consoleContent = document.getElementById('consoleContent');
+            const commands = [
+                'C:\\Users\\Administrator&gt;systeminfo',
+                'Scanning system configuration...',
+                'Checking for security vulnerabilities...',
+                'WARNING: Multiple security vulnerabilities detected!',
+                'Scanning running processes...',
+                'WARNING: Suspicious processes detected!',
+                'Checking network connections...',
+                'WARNING: Unauthorized network connections found!',
+                'System integrity check...',
+                'CRITICAL: System files have been modified!',
+                'C:\\Users\\Administrator&gt;'
+            ];
+            
+            let commandIndex = 0;
+            const commandInterval = setInterval(() => {
+                if (commandIndex < commands.length) {
+                    const newLine = document.createElement('div');
+                    newLine.className = 'console-line';
+                    newLine.textContent = commands[commandIndex];
+                    consoleContent.insertBefore(newLine, consoleContent.lastElementChild);
+                    
+                    // Scroll to bottom
+                    consoleContent.scrollTop = consoleContent.scrollHeight;
+                    
+                    commandIndex++;
+                } else {
+                    clearInterval(commandInterval);
+                }
+            }, 800);
+        }, 10000);
+
+        // Show blue screen of death after 30 seconds
+        setTimeout(() => {
+            const blueScreen = document.createElement('div');
+            blueScreen.style.position = 'absolute';
+            blueScreen.style.top = '0';
+            blueScreen.style.left = '0';
+            blueScreen.style.width = '100%';
+            blueScreen.style.height = '100%';
+            blueScreen.style.backgroundColor = '#0080FF';
+            blueScreen.style.zIndex = '1000';
+            blueScreen.style.display = 'flex';
+            blueScreen.style.justifyContent = 'center';
+            blueScreen.style.alignItems = 'center';
+            blueScreen.style.flexDirection = 'column';
+            
+            blueScreen.innerHTML = `
+                <div style="width: 80%; max-width: 800px; color: #fff; font-family: 'Courier New', monospace;">
+                    <div style="font-size: 24px; margin-bottom: 20px;">:(</div>
+                    <div style="font-size: 20px; margin-bottom: 20px;">Your PC ran into a problem and needs to restart.</div>
+                    <div style="margin-bottom: 20px;">We're just collecting some error info, and then we'll restart for you.</div>
+                    <div style="margin-bottom: 20px;">0% complete</div>
+                    <div style="margin-bottom: 20px;">For more information about this issue and possible fixes, visit https://www.windows.com/stopcode</div>
+                    <div style="margin-bottom: 20px;">If you call a support person, give them this info:</div>
+                    <div style="margin-bottom: 10px;">Stop code: CRITICAL_PROCESS_DIED</div>
+                    <div style="margin-bottom: 10px;">Failure: RANSOMWARE_DETECTED</div>
+                    <div style="margin-bottom: 10px;">Source: TROJAN_WIN32_RANSOMWARE</div>
+                    <div id="blueScreenProgress" style="margin-bottom: 20px;">
+                        <div style="width: 100%; height: 10px; background-color: rgba(255, 255, 255, 0.3); border-radius:
+<div style="width: 100%; height: 10px; background-color: rgba(255, 255, 255, 0.3); border-radius: 5px; overflow: hidden;">
+                            <div id="blueScreenProgressBar" style="height: 100%; background-color: #fff; width: 0%; transition: width 0.5s;"></div>
+                        </div>
+                    </div>
+                    <div id="blueScreenPercent" style="margin-bottom: 20px;">0% complete</div>
+                </div>
+            `;
+            
+            document.body.appendChild(blueScreen);
+            
+            // Animate blue screen progress
+            let blueScreenProgress = 0;
+            const blueScreenInterval = setInterval(() => {
+                blueScreenProgress += Math.floor(Math.random() * 5) + 1;
+                if (blueScreenProgress > 100) blueScreenProgress = 100;
+                
+                document.getElementById('blueScreenProgressBar').style.width = blueScreenProgress + '%';
+                document.getElementById('blueScreenPercent').textContent = blueScreenProgress + '% complete';
+                
+                if (blueScreenProgress >= 100) {
+                    clearInterval(blueScreenInterval);
+                    
+                    // After blue screen, show final ransom message
+                    setTimeout(() => {
+                        blueScreen.innerHTML = `
+                            <div style="width: 80%; max-width: 800px; color: #fff; font-family: 'Courier New', monospace; text-align: center;">
+                                <div style="font-size: 24px; margin-bottom: 20px; color: #ff0000;">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                                <div style="font-size: 20px; margin-bottom: 20px; color: #ff0000;">YOUR FILES HAVE BEEN ENCRYPTED</div>
+                                <div style="margin-bottom: 20px;">All your personal files have been encrypted with a military-grade encryption algorithm.</div>
+                                <div style="margin-bottom: 20px;">To recover your files, you must send 0.5 Bitcoin to:</div>
+                                <div style="margin-bottom: 20px; font-family: 'Courier New', monospace; font-size: 16px; color: #ffff00;">
+                                    1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+                                </div>
+                                <div style="margin-bottom: 20px;">After payment, your files will be automatically decrypted.</div>
+                                <div style="margin-bottom: 20px;">If payment is not received within 24 hours, the price will double and your files may be permanently deleted.</div>
+                                <div style="margin-bottom: 20px;">Time remaining: <span id="finalCountdown" style="color: #ff0000;">24:00:00</span></div>
+                                <button id="restartSystem" style="padding: 10px 20px; background-color: #3c3c3c; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 16px;">Restart System</button>
+                            </div>
+                        `;
+                        
+                        // Final countdown timer
+                        let finalTimeLeft = 24 * 60 * 60; // 24 hours in seconds
+                        const finalCountdownElement = document.getElementById('finalCountdown');
+                        
+                        const finalCountdownInterval = setInterval(() => {
+                            finalTimeLeft--;
+                            
+                            const hours = Math.floor(finalTimeLeft / 3600);
+                            const minutes = Math.floor((finalTimeLeft % 3600) / 60);
+                            const seconds = finalTimeLeft % 60;
+                            
+                            finalCountdownElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                            
+                            if (finalTimeLeft <= 0) {
+                                clearInterval(finalCountdownInterval);
+                                finalCountdownElement.textContent = '00:00:00';
+                                finalCountdownElement.style.color = '#ff0000';
+                                
+                                // Show expired message
+                                blueScreen.innerHTML = `
+                                    <div style="width: 80%; max-width: 800px; color: #fff; font-family: 'Courier New', monospace; text-align: center;">
+                                        <div style="font-size: 24px; margin-bottom: 20px; color: #ff0000;">
+                                            <i class="fas fa-times-circle"></i>
+                                        </div>
+                                        <div style="font-size: 20px; margin-bottom: 20px; color: #ff0000;">TIME EXPIRED</div>
+                                        <div style="margin-bottom: 20px;">The payment window has expired.</div>
+                                        <div style="margin-bottom: 20px;">Your files are now being permanently deleted.</div>
+                                        <div style="margin-bottom: 20px;">The ransom has now increased to 1.0 Bitcoin.</div>
+                                        <button id="payDouble" style="padding: 10px 20px; background-color: #ff0000; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 16px;">Pay 1.0 Bitcoin</button>
+                                    </div>
+                                `;
+                                
+                                document.getElementById('payDouble').addEventListener('click', function() {
+                                    // Reload the page to restart the simulation
+                                    location.reload();
+                                });
+                            }
+                        }, 1000);
+                        
+                        document.getElementById('restartSystem').addEventListener('click', function() {
+                            // Show restarting message
+                            blueScreen.innerHTML = `
+                                <div style="width: 80%; max-width: 800px; color: #fff; font-family: 'Courier New', monospace; text-align: center;">
+                                    <div style="font-size: 24px; margin-bottom: 20px;">
+                                        <i class="fas fa-sync-alt fa-spin"></i>
+                                    </div>
+                                    <div style="font-size: 20px; margin-bottom: 20px;">Restarting your computer...</div>
+                                    <div style="width: 100%; height: 10px; background-color: rgba(255, 255, 255, 0.3); border-radius: 5px; overflow: hidden;">
+                                        <div style="height: 100%; background-color: #fff; width: 0%; animation: restart 3s forwards;"></div>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // Add animation
+                            const restartStyle = document.createElement('style');
+                            restartStyle.textContent = `
+                                @keyframes restart {
+                                    from { width: 0%; }
+                                    to { width: 100%; }
+                                }
+                            `;
+                            document.head.appendChild(restartStyle);
+                            
+                            // After restart, reload the page
+                            setTimeout(() => {
+                                location.reload();
+                            }, 3000);
+                        });
+                    }, 2000);
+                }
+            }, 500);
+        }, 30000);
+    </script>
+</body>
+</html>
